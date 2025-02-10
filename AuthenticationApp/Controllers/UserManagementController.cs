@@ -2,10 +2,12 @@
 using Application.Interfaces.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace AuthenticationApp.Controllers
 {
     [Authorize(Roles = "Admin,SuperAdmin")]
+    [EnableRateLimiting("user-management-policy")]
     [Route("api/[controller]")]
     [ApiController]
     public class UserManagementController : ControllerBase

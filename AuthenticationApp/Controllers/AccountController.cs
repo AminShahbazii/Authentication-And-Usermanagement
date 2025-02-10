@@ -2,6 +2,7 @@
 using Application.Interfaces.IServices;
 using Application.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace AuthenticationApp.Controllers
 {
@@ -17,6 +18,7 @@ namespace AuthenticationApp.Controllers
             _registerService = registerService;
         }
 
+        [EnableRateLimiting("register-policy")]
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
         {
@@ -59,6 +61,8 @@ namespace AuthenticationApp.Controllers
                     );
             }
         }
+
+        [EnableRateLimiting("login-policy")]
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
         {
