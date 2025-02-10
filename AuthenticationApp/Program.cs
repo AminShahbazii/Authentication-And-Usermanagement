@@ -22,11 +22,13 @@ builder.Services.AddControllers();
 
 builder.Services.AddOpenApi();
 
-//////////////Database connection string//////////////
+
+////////////// Database Configuration //////////////
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-//////////////DI configuration//////////////
+
+////////////// Dependency Injection Configuration //////////////
 builder.Services.AddScoped<IUserAuthenticationRepository, UserAuthenticationRepository>();
 builder.Services.AddScoped<IUserManagementRepository, UserManagementRepository>();
 builder.Services.AddScoped<IRegisterService, RegisterService>();
@@ -34,7 +36,8 @@ builder.Services.AddScoped<ILoginService, LoginService>();
 builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 
-//////////////Identity configuration//////////////
+
+////////////// Identity Configuration //////////////
 builder.Services.AddIdentity<User, IdentityRole>(options =>
 {
     options.Password.RequireNonAlphanumeric = true;
@@ -42,7 +45,8 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
     options.Password.RequireDigit = true;
 }).AddEntityFrameworkStores<ApplicationDbContext>();
 
-//////////////Authentication configuration//////////////
+
+////////////// JWT Authentication Configuration //////////////
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -63,45 +67,42 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-var _logger = builder.Services.BuildServiceProvider().GetRequiredService<ILogger<Program>>();
 
-//////////////Rate limit configuration//////////////
+
+////////////// Rate Limit Configuration //////////////
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     options.AddPolicy("register-policy", context =>
     {
-        _logger.LogInformation("Register policy is called");
         var userIp = context.Connection.RemoteIpAddress?.ToString()?? "unknown";
         return RateLimitPartition.GetFixedWindowLimiter(userIp, _ => new FixedWindowRateLimiterOptions
         {
-            PermitLimit = 10,
-            Window = TimeSpan.FromSeconds(1),
-            QueueLimit = 4,
+            PermitLimit = 2,
+            Window = TimeSpan.FromSeconds(10),
+            QueueLimit = 1,
             QueueProcessingOrder = QueueProcessingOrder.OldestFirst
         });
-        _logger.LogInformation("Register policy is finished");
+
     });
     options.AddPolicy("login-policy", context =>
     {
-        _logger.LogInformation("Login policy is called");
         var userId = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+
         ?? context.Connection.RemoteIpAddress?.ToString() 
         ?? "unknown";
 
         return RateLimitPartition.GetSlidingWindowLimiter(userId, _ => new SlidingWindowRateLimiterOptions
         {
-            PermitLimit = 8,
-            Window = TimeSpan.FromSeconds(16),
-            SegmentsPerWindow = 4,
-            QueueLimit = 5,
-            QueueProcessingOrder = QueueProcessingOrder.OldestFirst
+            PermitLimit = 3,
+            Window = TimeSpan.FromSeconds(10),
+            SegmentsPerWindow = 1,
         });
-        _logger.LogInformation("Login policy is finished");
+
     });
     options.AddPolicy("user-management-policy", context =>
     {
-        _logger.LogInformation("User management policy is called");
+
         var role = context.User.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
 
         var userId = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
@@ -112,27 +113,24 @@ builder.Services.AddRateLimiter(options =>
         {
             return RateLimitPartition.GetSlidingWindowLimiter(userId, _ => new SlidingWindowRateLimiterOptions
             {
-                PermitLimit = 1,
-                Window = TimeSpan.FromSeconds(10),
+                PermitLimit = 10,
+                Window = TimeSpan.FromSeconds(5),
                 SegmentsPerWindow = 4,
-                QueueLimit = 5,
+                QueueLimit = 3,
                 QueueProcessingOrder = QueueProcessingOrder.OldestFirst
             });
         }
-        _logger.LogInformation("User management policy is finished");
-        _logger.LogInformation("User management for users policy is started");
+
         return RateLimitPartition.GetFixedWindowLimiter(userId, _ => new FixedWindowRateLimiterOptions
         {
             PermitLimit = 5,
-            Window = TimeSpan.FromSeconds(20),
+            Window = TimeSpan.FromSeconds(30),
             QueueLimit = 2,
             QueueProcessingOrder = QueueProcessingOrder.OldestFirst
         });
 
     });
 });
-
-
 
 
 var app = builder.Build();
