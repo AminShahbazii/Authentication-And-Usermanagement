@@ -1,16 +1,18 @@
 ﻿
+using Application.DTOs;
+
 namespace Application.Common
 {
     public class LoginResult
     {
-        public string Token { get; set; }
+        public TokenResponseDto Token { get; set; } // Access token and refresh token
         public bool Success { get; set; }
         public IEnumerable<string> Errors { get; set; } 
 
 
-        public static LoginResult SuccessResult(string token)
+        public static LoginResult SuccessResult(TokenResponseDto tokenResponseDto)
         {
-            return new LoginResult { Token = token, Success = true };
+            return new LoginResult { Token = tokenResponseDto, Success = true };
         }
 
         public static LoginResult Failure(IEnumerable<string> errors)

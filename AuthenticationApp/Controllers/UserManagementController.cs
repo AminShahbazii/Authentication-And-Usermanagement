@@ -23,14 +23,6 @@ namespace AuthenticationApp.Controllers
         [HttpGet("get-all-users")]
         public async Task<IActionResult> GetAllUsers()
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(new
-                {
-                    Error = ModelState.Values.SelectMany(error => error.Errors.Select(x => x.ErrorMessage))
-                });
-            }
-
             try
             {
                 var users = await _userManagementService.GetAllUsers();
@@ -54,14 +46,6 @@ namespace AuthenticationApp.Controllers
         [HttpGet("search")]
         public async Task<IActionResult> Search([FromQuery] string query)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(new
-                {
-                    Error = ModelState.Values.SelectMany(error => error.Errors.Select(x => x.ErrorMessage))
-                });
-            }
-
             try
             {
                 var users = await _userManagementService.Search(query);
@@ -85,14 +69,7 @@ namespace AuthenticationApp.Controllers
         [Authorize(Roles = "SuperAdmin")]
         [HttpPost("user-to-admin")]
         public async Task<IActionResult> UserToAdmin([FromQuery] string userId)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(new
-                {
-                    Error = ModelState.Values.SelectMany(error => error.Errors.Select(x => x.ErrorMessage))
-                });
-            }
+        { 
             try
             {
                 var result = await _userManagementService.UserToAdmin(userId);
@@ -118,14 +95,6 @@ namespace AuthenticationApp.Controllers
         [HttpPost("admin-to-user")]
         public async Task<IActionResult> AdmintToUser([FromQuery] string userId)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(new
-                {
-                    Errors = ModelState.Values.SelectMany(error => error.Errors.Select(error => error.ErrorMessage))
-                });
-            }
-
             try
             {
                 var result = await _userManagementService.AdminToUser(userId);

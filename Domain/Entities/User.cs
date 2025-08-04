@@ -11,5 +11,7 @@ namespace Domain.Entities
         public DateTime? RegisterDate { get; set; } 
         public DateTime? LastLoginDate { get; set; }
         public UserStatus Status { get; set; } = UserStatus.active;
+
+        public RefreshToken? RefreshToken { get; set; } 
     }
 }

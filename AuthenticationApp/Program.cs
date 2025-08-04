@@ -1,8 +1,12 @@
-﻿using Application.Interfaces.IRepository;
+﻿using Application.Common;
+using Application.Interfaces.IRepository;
 using Application.Interfaces.IServices;
 using Application.Services;
+using AuthenticationApp.Middlewares;
 using Domain.Entities;
+using Domain.Interfaces;
 using Infrastructure.DbContext;
+using Infrastructure.Logging;
 using Infrastructure.Repositories;
 using Infrastructure.Seed;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -10,6 +14,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
+using Serilog;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.RateLimiting;
@@ -21,6 +26,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 
 builder.Services.AddOpenApi();
+
+////////////// Log Configuration //////////////
+builder.Host.UseSerilog((context, ConfigurationBinder) =>
+{
+    ConfigurationBinder.ReadFrom.Configuration(context.Configuration);
+});
 
 
 ////////////// Database Configuration //////////////
@@ -35,7 +46,9 @@ builder.Services.AddScoped<IRegisterService, RegisterService>();
 builder.Services.AddScoped<ILoginService, LoginService>();
 builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<IUserManagementService, UserManagementService>();
-
+builder.Services.AddScoped(typeof(IAppLogger<>) , typeof(LoggerAdapter<>));
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
 ////////////// Identity Configuration //////////////
 builder.Services.AddIdentity<User, IdentityRole>(options =>
@@ -63,7 +76,10 @@ builder.Services.AddAuthentication(options =>
         ValidateLifetime = true,
         ValidIssuer = builder.Configuration["JWT:Issuer"],
         ValidAudience = builder.Configuration["JWT:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:SignInKey"]))
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:SignInKey"])),
+        ClockSkew = TimeSpan.Zero
+
+        
     };
 });
 
@@ -154,10 +170,15 @@ using (var scop = app.Services.CreateScope())
 if (app.Environment.IsDevelopment())
     {
         app.MapOpenApi();
-        app.MapScalarApiReference();
     }
 
+app.MapScalarApiReference();
+
 app.UseHttpsRedirection();
+
+app.UseMiddleware<GlobalException>();
+
+app.UseRouting();
 
 app.UseAuthentication();
 
@@ -166,5 +187,6 @@ app.UseAuthorization();
 app.UseRateLimiter();
 
 app.MapControllers();
+
 
 app.Run();

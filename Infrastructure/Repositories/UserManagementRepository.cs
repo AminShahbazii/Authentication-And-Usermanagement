@@ -1,5 +1,6 @@
 ﻿using Application.Interfaces.IRepository;
 using Domain.Entities;
+using Infrastructure.DbContext;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
@@ -9,10 +10,11 @@ namespace Infrastructure.Repositories
     public class UserManagementRepository : IUserManagementRepository
     {
         private readonly UserManager<User> _userManager;
-
-        public UserManagementRepository(UserManager<User> userManager)
+        private readonly ApplicationDbContext _context;
+        public UserManagementRepository(UserManager<User> userManager, ApplicationDbContext context)
         {
             _userManager = userManager;
+            _context = context;
         }
 
         public async Task<IdentityResult> AddRoleToUserAsync(User user, string role)
@@ -22,7 +24,9 @@ namespace Infrastructure.Repositories
 
         public async Task<User?> FindByIdAsync(string id)
         {
-            return await _userManager.FindByIdAsync(id);
+            return await _context.Users
+                .Include(r => r.RefreshToken)
+                .FirstOrDefaultAsync(u => u.Id == id);
         }
 
         public async Task<IEnumerable<User>> GetAllUsersAsync()
@@ -47,17 +51,23 @@ namespace Infrastructure.Repositories
 
         public async Task<User?> FindByEmailAsync(string email)
         {
-            return await _userManager.FindByEmailAsync(email);
+            return await _context.Users
+                .Include(r => r.RefreshToken)
+                .FirstOrDefaultAsync(u => u.Email == email);
         }
 
         public async Task<User?> FindByUserNameAsync(string userName)
         {
-            return await _userManager.FindByNameAsync(userName);
+            return await _context.Users
+                .Include(r => r.RefreshToken)
+                .FirstOrDefaultAsync(u => u.UserName == userName);
         }
 
         public async Task<User?> FindByPhoneNumberAsync(string phoneNumber)
         {
-            return await _userManager.Users.Where(user =>  user.PhoneNumber == phoneNumber).FirstOrDefaultAsync();
+            return await _context.Users
+                .Include(r => r.RefreshToken)
+                .FirstOrDefaultAsync(u => u.PhoneNumber == phoneNumber);
         }
 
         public async Task<IdentityResult> RemoveFromRoleAsync(User user, string role)

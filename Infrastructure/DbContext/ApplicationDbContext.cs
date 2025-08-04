@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Identity.Client;
 
 namespace Infrastructure.DbContext
 {
@@ -10,26 +11,25 @@ namespace Infrastructure.DbContext
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
-            try
-            {
-                var databaseCreator = Database.GetService<IDatabaseCreator>() as RelationalDatabaseCreator;
-                if (databaseCreator != null)
-                {
-                    if (!databaseCreator.CanConnect())
-                    {
-                        databaseCreator.Create();
-                    }
-                    if (!databaseCreator.HasTables())
-                    {
-                        databaseCreator.CreateTables();
-                    }
-                }
-
-            }
-            catch(Exception ex)
-            {
-
-            }
+           
         }
+
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            base.OnModelCreating(builder);
+
+            builder.Entity<RefreshToken>().HasKey(k => k.Id);
+
+            builder.Entity<RefreshToken>()
+                .HasOne(r => r.User)
+                .WithOne(u => u.RefreshToken)
+                .HasForeignKey<RefreshToken>(k => k.UserId);
+
+            builder.Entity<RefreshToken>()
+                .HasIndex(i => i.Token);
+        }
+
     }
 }
