@@ -84,6 +84,7 @@ dotnet run --project AuthenticationApp
 .
 ├── Application
 │   ├── DTOs               # Data Transfer Objects
+|   ├── Common             # Some common files
 │   ├── Interfaces         # Service and repository interfaces
 │   ├── Mapper             # AutoMapper configurations
 │   └── Services           # Business logic implementations
