@@ -52,12 +52,12 @@ dotnet run --project AuthenticationApp
 {
   "AllowedHosts": "*",
   "ConnectionStrings": {
-    "DefaultConnection": "Server=DESKTOP-ECI2DBS\\MYBANK;Database=AuthenticationApp2;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True"
+    "DefaultConnection": "Server=database;Database=AuthenticationApp;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True"
   },
   "JWT": {
-    "Audience": "http://localhost:7003",
-    "Issuer": "http://localhost:7003",
-    "SignInKey": "hakfhahfjashfh4289yur8q34ruqh47q8yrq4y89589y9832qy489y3hhaiuvahngh39"
+    "Audience": "http://localhost:port",
+    "Issuer": "http://localhost:port",
+    "SignInKey": "key"
   },
   "Serilog": {
     "Using": [ "Serilog.Sinks.Console", "Serilog.Sinks.Seq" ],
